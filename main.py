@@ -21,8 +21,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "*",
-        "https://bespoke-medovik-0b9d2c.netlify.app",
+        "https://capstoneteam18.netlify.app",
  
     ],  # Explicit origins for production
     allow_credentials=False,  # Set to False when using wildcard origins
