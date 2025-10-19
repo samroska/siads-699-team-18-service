@@ -8,51 +8,32 @@ from typing import Optional
 import logging
 import skin_lesion_classifier as Processor
 from skin_lesion_classifier import SkinLesionClassifier
+from image_converter import ImageConverter
+
+# Add TensorFlow logging control at the top
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="ML Image Prediction API",
-    description="A FastAPI backend that processes PNG images through a machine learning model",
+    description="A FastAPI backend that processes PNG, JPG, JPEG, HEIC, HEIF, and MPO images through a machine learning model",
     version="1.0.0"
 )
 
+# Initialize ImageConverter
+image_converter = ImageConverter()
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://capstoneteam18.netlify.app",
- 
-    ],  # Explicit origins for production
-    allow_credentials=False,  # Set to False when using wildcard origins
-    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Additional CORS middleware for extra coverage
-@app.middleware("http")
-async def cors_handler(request: Request, call_next):
-    # Get the origin from the request
-    origin = request.headers.get("origin")
-    
-    if request.method == "OPTIONS":
-        # Handle preflight requests
-        response = JSONResponse(content={"message": "OK"})
-    else:
-        response = await call_next(request)
-    
-    # Always add CORS headers
-    response.headers["Access-Control-Allow-Origin"] = origin or "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    response.headers["Access-Control-Expose-Headers"] = "*"
-    response.headers["Access-Control-Allow-Credentials"] = "false"
-    
-    # Add Vary header for proper caching
-    response.headers["Vary"] = "Origin"
-    
-    return response
 
 @app.get("/")
 async def root():
@@ -62,38 +43,27 @@ async def root():
 async def health_check():
     return {"status": "healthy", "service": "ml-image-api"}
 
-@app.post("/predict")
-async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or JPEG image file to process")):
+async def process_image_with_model(file: UploadFile, endpoint_name: str):
     """
-    Process a PNG, JPG, or JPEG image through the skin lesion classification model.
-    Automatically converts JPG/JPEG to PNG format for processing.
-    
+    Helper function to process images with the default model.
     Args:
-        file: PNG, JPG, or JPEG image file to be classified
-        
-    Returns:
-        JSONResponse with prediction results
+        file: Uploaded file
+        endpoint_name: Name of the endpoint for logging purposes
     """
     try:
-        logger.info(f"Received file upload: filename={file.filename}, content_type={file.content_type}")
-        
-        # Validate file upload
+        logger.info(f"Received file upload on {endpoint_name}: filename={file.filename}, content_type={file.content_type}")
         if not file or not file.filename:
             logger.error("No file uploaded")
             return JSONResponse(
                 status_code=422,
-                content={"error": "No file uploaded. Please provide a PNG, JPG, or JPEG image file."},
+                content={"error": "No file uploaded. Please provide a PNG, JPG, JPEG, HEIC, HEIF, or MPO image file."},
                 headers={
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*"
                 }
             )
-        
-        # Read file content
         file_content = await file.read()
         logger.info(f"File content read successfully, size: {len(file_content)} bytes")
-        
-        # Validate file content is not empty
         if not file_content:
             logger.error("Uploaded file is empty")
             return JSONResponse(
@@ -104,69 +74,28 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                     "Access-Control-Allow-Origin": "*"
                 }
             )
-        
-        # Validate and convert image format
+        # Validate and convert image using ImageConverter
         try:
-            img = Image.open(io.BytesIO(file_content))
-            img.verify()  # Verify the image is valid
-            
-            # Re-open the image after verify (verify() can corrupt the image object)
-            img = Image.open(io.BytesIO(file_content))
-            original_format = img.format
-            
-            # Check if the image format is supported
-            if img.format not in ['PNG', 'JPEG']:
-                logger.error(f"Unsupported image format: {img.format}")
-                return JSONResponse(
-                    status_code=422,
-                    content={
-                        "error": f"Unsupported image format: {img.format}. Only PNG, JPG, and JPEG are supported.",
-                        "received_format": img.format,
-                        "supported_formats": ["PNG", "JPEG", "JPG"]
-                    },
-                    headers={
-                        "Content-Type": "application/json",
-                        "Access-Control-Allow-Origin": "*"
-                    }
-                )
-            
-            # Convert to PNG if it's JPEG/JPG
-            if img.format == 'JPEG':
-                logger.info(f"Converting {img.format} to PNG for processing")
-                
-                # Ensure RGB mode (JPEG might be in different modes)
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                
-                # Convert to PNG in memory
-                png_buffer = io.BytesIO()
-                img.save(png_buffer, format='PNG')
-                png_buffer.seek(0)
-                
-                # Create new PNG image object
-                img = Image.open(png_buffer)
-                logger.info(f"Successfully converted {original_format} to PNG")
-            
-            logger.info(f"Valid image validated: format={original_format}, final_format=PNG, size={img.size}")
-            
+            img, original_format, was_converted = image_converter.process_image(file_content)
+            logger.info(f"Successfully processed image: original_format={original_format}, final_format=PNG, size={img.size}, mode={img.mode}, converted={was_converted}")
         except Exception as e:
-            logger.error(f"Invalid image file: {e}")
+            logger.error(f"Image validation/conversion failed: {e}")
+            supported_formats_msg = image_converter.get_supported_formats_message()
             return JSONResponse(
                 status_code=422,
-                content={"error": "Invalid image file. Please upload a valid PNG, JPG, or JPEG image."},
+                content={
+                    "error": f"Invalid or unsupported image file: {str(e)}", 
+                    "supported_formats": supported_formats_msg
+                },
                 headers={
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*"
                 }
             )
-        
-        # Process image through ML model
+
         try:
-            # Use the inference function from ml_model
-            logger.info("Starting ML model inference...")
+            logger.info(f"Starting ML model inference...")
             predictions = SkinLesionClassifier.predict(img)
-            
-            # Validate predictions format
             if not isinstance(predictions, dict):
                 logger.error(f"Invalid predictions format: {type(predictions)}")
                 return JSONResponse(
@@ -177,8 +106,6 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                         "Access-Control-Allow-Origin": "*"
                     }
                 )
-            
-            # Get the top prediction
             try:
                 top_class = max(predictions, key=predictions.get)
                 confidence = predictions[top_class]
@@ -193,22 +120,14 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                         "Access-Control-Allow-Origin": "*"
                     }
                 )
-            
             logger.info(f"Prediction completed successfully for {file.filename}")
-            
             return JSONResponse(
                 status_code=200,
                 content={
                     "message": "Image processed successfully",
                     "filename": file.filename,
-                    "image_info": {
-                        "original_format": original_format,
-                        "processed_format": "PNG",
-                        "size": img.size,
-                        "mode": img.mode,
-                        "file_size_bytes": len(file_content),
-                        "converted": original_format != "PNG"
-                    },
+                    "endpoint": endpoint_name,
+                    "image_info": image_converter.get_image_info(img, original_format, len(file_content), was_converted),
                     "predictions": {
                         "top_prediction": {
                             "class": top_class,
@@ -224,7 +143,6 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                     "Access-Control-Allow-Headers": "Content-Type, Authorization"
                 }
             )
-            
         except Exception as e:
             logger.error(f"Error during ML inference: {e}")
             return JSONResponse(
@@ -235,11 +153,10 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                     "Access-Control-Allow-Origin": "*"
                 }
             )
-            
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error processing image: {e}")
+        logger.error(f"Unexpected error processing image on {endpoint_name}: {e}")
         return JSONResponse(
             status_code=500,
             content={"error": f"Internal server error: {str(e)}"},
@@ -248,3 +165,17 @@ async def predict_image(file: UploadFile = File(..., description="PNG, JPG, or J
                 "Access-Control-Allow-Origin": "*"
             }
         )
+
+@app.post("/predict")
+async def predict_image(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file to process")):
+    """
+    Process image using the default ML model.
+    """
+    return await process_image_with_model(file, '/predict')
+
+@app.post("/user")
+async def predict_image_user(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file for user model prediction")):
+    """
+    Process image using the default ML model (user endpoint).
+    """
+    return await process_image_with_model(file, '/user')
