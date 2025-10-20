@@ -29,7 +29,7 @@ image_converter = ImageConverter()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://capstoneteam18.netlify.app"],
+    allow_origins=["https://capstoneteam18.netlify.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,8 +58,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                 status_code=422,
                 content={"error": "No file uploaded. Please provide a PNG, JPG, JPEG, HEIC, HEIF, or MPO image file."},
                 headers={
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
+                    "Content-Type": "application/json"
                 }
             )
         file_content = await file.read()
@@ -70,8 +69,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                 status_code=422,
                 content={"error": "Uploaded file is empty. Please provide a valid image file."},
                 headers={
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
+                    "Content-Type": "application/json"
                 }
             )
         # Validate and convert image using ImageConverter
@@ -88,8 +86,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                     "supported_formats": supported_formats_msg
                 },
                 headers={
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
+                    "Content-Type": "application/json"
                 }
             )
 
@@ -102,8 +99,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                     status_code=500,
                     content={"error": "ML model returned invalid prediction format"},
                     headers={
-                        "Content-Type": "application/json",
-                        "Access-Control-Allow-Origin": "*"
+                        "Content-Type": "application/json"
                     }
                 )
             try:
@@ -116,8 +112,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                     status_code=500,
                     content={"error": "Error processing model predictions"},
                     headers={
-                        "Content-Type": "application/json",
-                        "Access-Control-Allow-Origin": "*"
+                        "Content-Type": "application/json"
                     }
                 )
             logger.info(f"Prediction completed successfully for {file.filename}")
@@ -137,10 +132,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                     }
                 },
                 headers={
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization"
+                    "Content-Type": "application/json"
                 }
             )
         except Exception as e:
@@ -149,8 +141,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
                 status_code=500,
                 content={"error": f"Error processing image through ML model: {str(e)}"},
                 headers={
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
+                    "Content-Type": "application/json"
                 }
             )
     except HTTPException:
@@ -161,8 +152,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
             status_code=500,
             content={"error": f"Internal server error: {str(e)}"},
             headers={
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
+                "Content-Type": "application/json"
             }
         )
 
