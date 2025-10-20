@@ -24,7 +24,7 @@ if [[ ! -f .last_install ]] || [[ requirements.txt -nt .last_install ]]; then
 fi
 
 HOST=${HOST:-0.0.0.0}
-PORT=${PORT:-8000}
+PORT=${PORT:-8080}
 LOG_LEVEL=${LOG_LEVEL:-info}
 
 echo "Starting server on http://$HOST:$PORT"
