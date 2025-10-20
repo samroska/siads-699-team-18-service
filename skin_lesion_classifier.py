@@ -22,20 +22,21 @@ class SkinLesionClassifier:
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
     INPUT_SIZE = (224, 224)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
+    DOCTOR_MODEL_ZIP = 'BCN20000.keras.zip'
     
     @staticmethod
-    def _extract_model_from_zip(zip_path: str) -> str:
-        """Extract model from PAD-UFES-20.keras.zip and return the .keras file path."""
+    def _extract_model_from_zip(zip_path: str, model_key: str) -> str:
+        """Extract model from a zip and return the .keras file path."""
         global _temp_dirs
         if not os.path.exists(zip_path):
             raise FileNotFoundError(f"Model zip file not found: {zip_path}")
 
-        if 'default' not in _temp_dirs or not _temp_dirs['default']:
-            _temp_dirs['default'] = tempfile.mkdtemp(suffix='_model')
+        if model_key not in _temp_dirs or not _temp_dirs[model_key]:
+            _temp_dirs[model_key] = tempfile.mkdtemp(suffix=f'_{model_key}_model')
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(_temp_dirs['default'])
+            zip_ref.extractall(_temp_dirs[model_key])
 
-        for root, dirs, files in os.walk(_temp_dirs['default']):
+        for root, dirs, files in os.walk(_temp_dirs[model_key]):
             for file in files:
                 if file.endswith('.keras'):
                     model_path = os.path.join(root, file)
@@ -43,21 +44,24 @@ class SkinLesionClassifier:
                     return model_path
         raise FileNotFoundError("No .keras model file found in the zip archive")
     @staticmethod
-    def _ensure_model_loaded():
-        """Ensure the model is loaded from PAD-UFES-20.keras.zip."""
+    def _ensure_model_loaded(model_key: str = 'default'):
+        """Ensure the model is loaded for the given key ('default' or 'doctor')."""
         global _models, _models_loaded
-        if 'default' in _models_loaded and _models_loaded['default'] and _models.get('default') is not None:
+        if model_key in _models_loaded and _models_loaded[model_key] and _models.get(model_key) is not None:
             return
-        zip_path = SkinLesionClassifier.DEFAULT_MODEL_ZIP
+        if model_key == 'doctor':
+            zip_path = SkinLesionClassifier.DOCTOR_MODEL_ZIP
+        else:
+            zip_path = SkinLesionClassifier.DEFAULT_MODEL_ZIP
         try:
-            model_path = SkinLesionClassifier._extract_model_from_zip(zip_path)
+            model_path = SkinLesionClassifier._extract_model_from_zip(zip_path, model_key)
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found: {model_path}")
-            _models['default'] = tf.keras.models.load_model(model_path)
-            _models_loaded['default'] = True
-            logger.info(f"Model loaded successfully from {model_path}")
+            _models[model_key] = tf.keras.models.load_model(model_path)
+            _models_loaded[model_key] = True
+            logger.info(f"Model '{model_key}' loaded successfully from {model_path}")
         except Exception as e:
-            logger.error(f"Error loading model: {e}")
+            logger.error(f"Error loading model '{model_key}': {e}")
             SkinLesionClassifier._cleanup_temp_files()
             raise
     
@@ -98,23 +102,23 @@ class SkinLesionClassifier:
             raise
             
     @staticmethod
-    def predict(image: Union[Image.Image, str]) -> Dict[str, float]:
+    def predict(image: Union[Image.Image, str], model_key: str = 'default') -> Dict[str, float]:
         """
-        Make prediction using the default model.
+        Make prediction using the specified model ('default' or 'doctor').
         """
         try:
-            SkinLesionClassifier._ensure_model_loaded()
-            if 'default' not in _models or _models['default'] is None:
-                raise RuntimeError("Model failed to load.")
+            SkinLesionClassifier._ensure_model_loaded(model_key)
+            if model_key not in _models or _models[model_key] is None:
+                raise RuntimeError(f"Model '{model_key}' failed to load.")
             processed_image = SkinLesionClassifier.preprocess_image(image)
-            prediction = _models['default'].predict(processed_image, verbose=0)
+            prediction = _models[model_key].predict(processed_image, verbose=0)
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
                 results[class_name] = float(round(prediction[0][i], 3))
-            logger.info(f"Prediction completed: {results}")
+            logger.info(f"Prediction completed with model '{model_key}': {results}")
             return results
         except Exception as e:
-            logger.error(f"Error making prediction: {e}")
+            logger.error(f"Error making prediction with model '{model_key}': {e}")
             raise
     
     @staticmethod

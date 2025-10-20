@@ -93,7 +93,7 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
 
         try:
             logger.info(f"Starting ML model inference...")
-            predictions = SkinLesionClassifier.predict(img)
+            predictions = SkinLesionClassifier.predict(img, model_key=endpoint_name)
             if not isinstance(predictions, dict):
                 logger.error(f"Invalid predictions format: {type(predictions)}")
                 return JSONResponse(
@@ -157,16 +157,18 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
             }
         )
 
-@app.post("/predict")
+@app.post("/user")
 async def predict_image(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file to process")):
     """
     Process image using the default ML model.
     """
-    return await process_image_with_model(file, '/predict')
+    return await process_image_with_model(file, 'user')
 
-@app.post("/user")
-async def predict_image_user(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file for user model prediction")):
+
+# Endpoint for /doctors using BCN20000.keras.zip
+@app.post("/doctor")
+async def predict_image_doctors(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file for doctor model prediction")):
     """
-    Process image using the default ML model (user endpoint).
+    Process image using the 'doctor' ML model.
     """
-    return await process_image_with_model(file, '/user')
+    return await process_image_with_model(file, 'doctor')
