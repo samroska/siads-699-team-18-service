@@ -20,7 +20,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 class SkinLesionClassifier:
 
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
-    INPUT_SIZE = (64, 64)
+    INPUT_SIZE = (224, 224)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
     @staticmethod
@@ -62,32 +62,6 @@ class SkinLesionClassifier:
             raise
     
     @staticmethod
-    def _ensure_model_loaded(model_name: str = 'default'):
-        """Ensure the specified model is loaded."""
-        global _models, _models_loaded
-        
-        if model_name in _models_loaded and _models_loaded[model_name] and _models.get(model_name) is not None:
-            return
-        
-        if model_name in SkinLesionClassifier.MODEL_CONFIGS:
-            model_path = SkinLesionClassifier.MODEL_CONFIGS[model_name]
-        else:
-            model_path = model_name
-        
-        try:
-            actual_model_path = SkinLesionClassifier._extract_model_if_zipped(model_path, model_name)
-            
-            if not os.path.exists(actual_model_path):
-                raise FileNotFoundError(f"Model file not found for {model_name}: {actual_model_path}")
-            
-            _models[model_name] = tf.keras.models.load_model(actual_model_path)
-            _models_loaded[model_name] = True
-            logger.info(f"Model '{model_name}' loaded successfully from {actual_model_path}")
-            
-        except Exception as e:
-            logger.error(f"Error loading {model_name} model: {e}")
-            SkinLesionClassifier._cleanup_temp_files(model_name)
-            raise
     
     @staticmethod
     def _cleanup_temp_files():
@@ -105,22 +79,20 @@ class SkinLesionClassifier:
     def preprocess_image(image: Union[Image.Image, str]) -> np.ndarray:
  
         try:
- 
             if isinstance(image, str):
                 image_rgb = Image.open(image).convert('RGB')
             elif isinstance(image, Image.Image):
                 image_rgb = image.convert('RGB')
             else:
                 raise ValueError("Image must be a PIL Image object or file path")
-            
+
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
- 
-            processed_array = img_to_array(resized_image).reshape(1, 64, 64, 3)
+
+            processed_array = img_to_array(resized_image).reshape(1, 224, 224, 3)
             processed_array = processed_array / 255.0
-            
+
             return processed_array
-            
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")
             raise
