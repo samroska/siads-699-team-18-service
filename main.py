@@ -1,3 +1,8 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,10 +14,6 @@ import logging
 import skin_lesion_classifier as Processor
 from skin_lesion_classifier import SkinLesionClassifier
 from image_converter import ImageConverter
-
-# Add TensorFlow logging control at the top
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
