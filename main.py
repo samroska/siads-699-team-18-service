@@ -27,7 +27,7 @@ app = FastAPI(
 # Initialize ImageConverter
 image_converter = ImageConverter()
 
-Add CORS middleware
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://capstoneteam18.netlify.app", "https://capstoneteam18.netlify.com", "https://team-18-test.netlify.app"],
