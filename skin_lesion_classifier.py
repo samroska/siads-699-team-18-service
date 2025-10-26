@@ -96,7 +96,17 @@ class SkinLesionClassifier:
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")
             raise
-            
+    def lookup_class_name(class_name: str) -> str:
+        """Lookup full class name from abbreviation."""
+        class_map = {
+            'ACK': 'Actinic Keratosis',
+            'BCC': 'Basal Cell Carcinoma',
+            'MEL': 'Melanoma',
+            'NEV': 'Nevus',
+            'SCC': 'Squamous Cell Carcinoma',
+            'SEK': 'Seborrheic Keratosis'
+        }
+        return class_map.get(class_name, 'Unknown')
     @staticmethod
     def predict(image: Union[Image.Image, str]) -> Dict[str, float]:
         """
@@ -110,9 +120,11 @@ class SkinLesionClassifier:
             prediction = _models['default'].predict(processed_image, verbose=0)
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
-                results[class_name] = float(round(prediction[0][i], 3))
-            logger.info(f"Prediction completed: {results}")
-            return results
+                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 3))
+                logger.info(f"Prediction completed: {results}")
+            sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
+            logger.info(f"Prediction completed: {sorted_results}")
+            return sorted_results
         except Exception as e:
             logger.error(f"Error making prediction: {e}")
             raise
