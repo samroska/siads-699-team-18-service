@@ -121,9 +121,7 @@ class SkinLesionClassifier:
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
                 results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 3))
-                logger.info(f"Prediction completed: {results}")
             sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
-            logger.info(f"Prediction completed: {sorted_results}")
             return sorted_results
         except Exception as e:
             logger.error(f"Error making prediction: {e}")
