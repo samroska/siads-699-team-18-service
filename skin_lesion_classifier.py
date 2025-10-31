@@ -20,7 +20,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 class SkinLesionClassifier:
 
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
-    INPUT_SIZE = (224, 224)
+    INPUT_SIZE = (96, 96)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
     @staticmethod
@@ -88,11 +88,10 @@ class SkinLesionClassifier:
 
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
-
-            processed_array = img_to_array(resized_image).reshape(1, 224, 224, 3)
+            # Add batch dimension and normalize
+            processed_array = tf.expand_dims(resized_image, axis=0)
             processed_array = processed_array / 255.0
-
-            return processed_array
+            return processed_array.numpy()
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")
             raise
