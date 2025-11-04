@@ -18,7 +18,7 @@ PAD-UFES-20 is a smartphone-based dataset collected in primary care settings in 
 
 ## Project Architecture
 
-The architecture of this project is a backend REST API service built with Python, designed to serve a machine learning model for skin lesion classification. The service exposes endpoints (such as /users) that accept image files via HTTP requests, process them using the BCN20000 model, and return predictions. It is intended to be consumed by a frontend application, enabling users to upload images and receive diagnostic results. The backend handles model loading, inference, and communication with the frontend.
+The architecture of this project is a backend REST API service built with Python, designed to serve a machine learning model for skin lesion classification. The service exposes endpoints (such as /users) that accept image files via HTTP requests, process them using the PAD-UFES-20 model, and return predictions. It is intended to be consumed by a frontend application, enabling users to upload images and receive diagnostic results. The backend handles model loading, inference, and communication with the frontend.
 
 
 ## Local setup
