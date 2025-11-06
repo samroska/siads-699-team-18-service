@@ -23,8 +23,8 @@ The architecture of this project is a backend REST API service built with Python
 Repos used to make this application:
 
 UI: https://github.com/samroska/siads-699-team-18-frontend
-Users Service: https://github.com/samroska/siads-699-team-18-service
-Doctors Service: https://github.com/samroska/siads-699-team-18-service-2
+User Service: https://github.com/samroska/siads-699-team-18-service
+Doctor Service: https://github.com/samroska/siads-699-team-18-service-2
 
 
 ## Local setup
