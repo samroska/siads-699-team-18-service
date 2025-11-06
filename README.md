@@ -20,6 +20,12 @@ PAD-UFES-20 is a smartphone-based dataset collected in primary care settings in 
 
 The architecture of this project is a backend REST API service built with Python, designed to serve a machine learning model for skin lesion classification. The service exposes endpoints (such as /users) that accept image files via HTTP requests, process them using the PAD-UFES-20 model, and return predictions. It is intended to be consumed by a frontend application, enabling users to upload images and receive diagnostic results. The backend handles model loading, inference, and communication with the frontend.
 
+Repos used to make this application:
+
+UI: https://github.com/samroska/siads-699-team-18-frontend
+Users Service: https://github.com/samroska/siads-699-team-18-service
+Doctors Service: https://github.com/samroska/siads-699-team-18-service-2
+
 
 ## Local setup
 
@@ -45,3 +51,6 @@ The architecture of this project is a backend REST API service built with Python
     - `allow_origins=["https://capstoneteam18.netlify.com"]`
 
 Note: this project runs on port 8080. Unlike project siads-699-test-18-service.
+
+### AI usage
+This application was built with help from Microsoft copilot 
