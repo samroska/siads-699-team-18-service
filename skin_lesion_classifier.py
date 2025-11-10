@@ -118,8 +118,9 @@ class SkinLesionClassifier:
             prediction = _models['default'].predict(processed_image, verbose=0)
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
-                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 3))
+                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(prediction[0][i])
             sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
+            logger.info(f"Prediction results: {sorted_results}")
             return sorted_results
         except Exception as e:
             logger.error(f"Error making prediction: {e}")
