@@ -118,7 +118,7 @@ class SkinLesionClassifier:
             prediction = _models['default'].predict(processed_image, verbose=0)
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
-                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(prediction[0][i])
+                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 5))
             sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
             logger.info(f"Prediction results: {sorted_results}")
             return sorted_results
