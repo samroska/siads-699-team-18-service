@@ -19,7 +19,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 
 class SkinLesionClassifier:
 
-    CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
+    CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
     INPUT_SIZE = (96, 96)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
@@ -110,7 +110,8 @@ class SkinLesionClassifier:
             'MEL': 'Melanoma',
             'NEV': 'Nevus',
             'SCC': 'Squamous Cell Carcinoma',
-            'SEK': 'Seborrheic Keratosis'
+            'SEK': 'Seborrheic Keratosis',
+            'MPX': 'Monkeypox'
         }
         return class_map.get(class_name, 'Unknown')
     @staticmethod
