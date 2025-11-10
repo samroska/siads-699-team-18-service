@@ -85,6 +85,13 @@ class SkinLesionClassifier:
                 image_rgb = image.convert('RGB')
             else:
                 raise ValueError("Image must be a PIL Image object or file path")
+            
+            # Convert to JPG format for consistency
+            import io
+            jpg_buffer = io.BytesIO()
+            image_rgb.save(jpg_buffer, format='JPEG', quality=95)
+            jpg_buffer.seek(0)
+            image_rgb = Image.open(jpg_buffer).convert('RGB')
 
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
