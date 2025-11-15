@@ -20,7 +20,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 class SkinLesionClassifier:
 
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
-    INPUT_SIZE = (96, 96)
+    INPUT_SIZE = (224, 224)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
     @staticmethod
@@ -95,7 +95,7 @@ class SkinLesionClassifier:
 
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
-            processed_array = resized_image.numpy().reshape(1, 96, 96, 3)
+            processed_array = resized_image.numpy().reshape(1, SkinLesionClassifier.INPUT_SIZE[0], SkinLesionClassifier.INPUT_SIZE[1], 3)
             # processed_array = tf.expand_dims(resized_image, axis=0)
             # processed_array = processed_array / 255.0
             return processed_array
