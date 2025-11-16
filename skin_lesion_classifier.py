@@ -20,7 +20,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 class SkinLesionClassifier:
 
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
-    INPUT_SIZE = (224, 224)
+    INPUT_SIZE = (64, 64)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
     @staticmethod
