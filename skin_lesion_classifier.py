@@ -44,10 +44,24 @@ class SkinLesionClassifier:
         raise FileNotFoundError("No .keras model file found in the zip archive")
     @staticmethod
     def _ensure_model_loaded():
-        """Ensure the model is loaded from PAD-UFES-20.keras.zip."""
+        """Ensure the model is loaded from PAD-UFES-20.keras or PAD-UFES-20.keras.zip."""
         global _models, _models_loaded
         if 'default' in _models_loaded and _models_loaded['default'] and _models.get('default') is not None:
             return
+        
+        # First, try to load .keras file directly if it exists
+        keras_file = 'PAD-UFES-20.keras'
+        if os.path.exists(keras_file):
+            try:
+                logger.info(f"Found .keras file: {keras_file}")
+                _models['default'] = tf.keras.models.load_model(keras_file)
+                _models_loaded['default'] = True
+                logger.info(f"Model loaded successfully from {keras_file}")
+                return
+            except Exception as e:
+                logger.warning(f"Failed to load .keras file: {e}, trying zip file...")
+        
+        # If .keras file doesn't exist or failed, try the zip file
         zip_path = SkinLesionClassifier.DEFAULT_MODEL_ZIP
         try:
             model_path = SkinLesionClassifier._extract_model_from_zip(zip_path)

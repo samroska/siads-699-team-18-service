@@ -7,8 +7,6 @@ __pycache__/
 *.so
 
 # Model files (keep split parts, ignore reassembled)
-PAD-UFES-20.zip
-PAD-UFES-20.keras
 *.h5
 
 # Distribution / packaging
@@ -212,5 +210,4 @@ marimo/_lsp/
 __marimo__/
 
 .last_install
-*.keras
 .DS_Store
