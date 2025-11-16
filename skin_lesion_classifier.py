@@ -20,7 +20,7 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 class SkinLesionClassifier:
 
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
-    INPUT_SIZE = (64, 64)
+    INPUT_SIZE = (96, 96)
     DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
     
     @staticmethod
@@ -99,19 +99,10 @@ class SkinLesionClassifier:
                 image_rgb = image.convert('RGB')
             else:
                 raise ValueError("Image must be a PIL Image object or file path")
-            
-            # Convert to JPG format for consistency
-            # import io
-            # jpg_buffer = io.BytesIO()
-            # image_rgb.save(jpg_buffer, format='JPEG', quality=95)
-            # jpg_buffer.seek(0)
-            # image_rgb = Image.open(jpg_buffer).convert('RGB')
 
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
             processed_array = resized_image.numpy().reshape(1, SkinLesionClassifier.INPUT_SIZE[0], SkinLesionClassifier.INPUT_SIZE[1], 3)
-            # processed_array = tf.expand_dims(resized_image, axis=0)
-            # processed_array = processed_array / 255.0
             return processed_array
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")

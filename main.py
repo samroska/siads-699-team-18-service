@@ -53,12 +53,7 @@ async def health_check():
     return {"status": "healthy", "service": "ml-image-api"}
 
 async def process_image_with_model(file: UploadFile, endpoint_name: str):
-    """
-    Helper function to process images with the default model.
-    Args:
-        file: Uploaded file
-        endpoint_name: Name of the endpoint for logging purposes
-    """
+
     try:
         logger.info(f"Received file upload on {endpoint_name}: filename={file.filename}, content_type={file.content_type}")
         if not file or not file.filename:
@@ -168,14 +163,10 @@ async def process_image_with_model(file: UploadFile, endpoint_name: str):
 
 @app.post("/predict")
 async def predict_image(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file to process")):
-    """
-    Process image using the default ML model.
-    """
+
     return await process_image_with_model(file, '/predict')
 
 @app.post("/user")
 async def predict_image_user(file: UploadFile = File(..., description="PNG, JPG, JPEG, HEIC, HEIF, or MPO image file for user model prediction")):
-    """
-    Process image using the default ML model (user endpoint).
-    """
+
     return await process_image_with_model(file, '/user')
