@@ -79,8 +79,6 @@ class SkinLesionClassifier:
         raise FileNotFoundError(f"Model file not found: {model_path} or {zip_path}")
     
     @staticmethod
-    
-    @staticmethod
     def _cleanup_temp_files():
         global _temp_dirs
         for temp_dir in _temp_dirs.values():
