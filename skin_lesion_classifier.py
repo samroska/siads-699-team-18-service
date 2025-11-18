@@ -22,25 +22,61 @@ class SkinLesionClassifier:
     CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
     INPUT_SIZE = (112, 112)
     DEFAULT_MODEL_FILE = 'PAD-UFES-20.keras'
+    DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
+    @staticmethod
+    def _extract_model_from_zip(zip_path: str) -> str:
+        """Extract model from PAD-UFES-20.keras.zip and return the .keras file path."""
+        global _temp_dirs
+        if not os.path.exists(zip_path):
+            raise FileNotFoundError(f"Model zip file not found: {zip_path}")
+
+        if 'default' not in _temp_dirs or not _temp_dirs['default']:
+            _temp_dirs['default'] = tempfile.mkdtemp(suffix='_model')
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(_temp_dirs['default'])
+
+        for root, dirs, files in os.walk(_temp_dirs['default']):
+            for file in files:
+                if file.endswith('.keras'):
+                    model_path = os.path.join(root, file)
+                    logger.info(f"Found model file: {model_path}")
+                    return model_path
+        raise FileNotFoundError("No .keras model file found in the zip archive")
     
     # Zip extraction removed; only .keras file is used
     @staticmethod
     def _ensure_model_loaded():
-        """Ensure the model is loaded from PAD-UFES-20.keras."""
+        """Ensure the model is loaded from PAD-UFES-20.keras or PAD-UFES-20.keras.zip."""
         global _models, _models_loaded
         if 'default' in _models_loaded and _models_loaded['default'] and _models.get('default') is not None:
             return
         model_path = SkinLesionClassifier.DEFAULT_MODEL_FILE
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found: {model_path}")
-        try:
-            _models['default'] = tf.keras.models.load_model(model_path)
-            _models_loaded['default'] = True
-            logger.info(f"Model loaded successfully from {model_path}")
-        except Exception as e:
-            logger.error(f"Error loading model: {e}")
-            SkinLesionClassifier._cleanup_temp_files()
-            raise
+        if os.path.exists(model_path):
+            try:
+                _models['default'] = tf.keras.models.load_model(model_path)
+                _models_loaded['default'] = True
+                logger.info(f"Model loaded successfully from {model_path}")
+                return
+            except Exception as e:
+                logger.warning(f"Failed to load .keras file: {e}, trying zip file...")
+        zip_path = SkinLesionClassifier.DEFAULT_MODEL_ZIP
+        if os.path.exists(zip_path):
+            try:
+                extracted_model_path = SkinLesionClassifier._extract_model_from_zip(zip_path)
+                if not os.path.exists(extracted_model_path):
+                    raise FileNotFoundError(f"Model file not found: {extracted_model_path}")
+                _models['default'] = tf.keras.models.load_model(extracted_model_path)
+                _models_loaded['default'] = True
+                logger.info(f"Model loaded successfully from {extracted_model_path}")
+                # Delete the zip file after extraction
+                os.remove(zip_path)
+                logger.info(f"Deleted model zip file: {zip_path}")
+                return
+            except Exception as e:
+                logger.error(f"Error loading model from zip: {e}")
+                SkinLesionClassifier._cleanup_temp_files()
+                raise
+        raise FileNotFoundError(f"Model file not found: {model_path} or {zip_path}")
     
     @staticmethod
     
