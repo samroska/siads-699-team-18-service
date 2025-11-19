@@ -68,9 +68,6 @@ class SkinLesionClassifier:
                 _models['default'] = tf.keras.models.load_model(extracted_model_path)
                 _models_loaded['default'] = True
                 logger.info(f"Model loaded successfully from {extracted_model_path}")
-                # Delete the zip file after extraction
-                os.remove(zip_path)
-                logger.info(f"Deleted model zip file: {zip_path}")
                 return
             except Exception as e:
                 logger.error(f"Error loading model from zip: {e}")
