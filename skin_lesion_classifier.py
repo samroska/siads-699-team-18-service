@@ -19,40 +19,22 @@ _temp_dirs: Dict[str, Optional[str]] = {}
 
 class SkinLesionClassifier:
 
-    CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
-    INPUT_SIZE = (96, 96)
-    DEFAULT_MODEL_ZIP = 'PAD-UFES-20.keras.zip'
+    CLASS_NAMES = ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK', 'MPX']
+    INPUT_SIZE = (112, 112)
+    DEFAULT_MODEL_FILE = 'PAD-UFES-20.keras'
+    # Zip extraction removed; only .keras file is used
     
-    @staticmethod
-    def _extract_model_from_zip(zip_path: str) -> str:
-        """Extract model from PAD-UFES-20.keras.zip and return the .keras file path."""
-        global _temp_dirs
-        if not os.path.exists(zip_path):
-            raise FileNotFoundError(f"Model zip file not found: {zip_path}")
-
-        if 'default' not in _temp_dirs or not _temp_dirs['default']:
-            _temp_dirs['default'] = tempfile.mkdtemp(suffix='_model')
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(_temp_dirs['default'])
-
-        for root, dirs, files in os.walk(_temp_dirs['default']):
-            for file in files:
-                if file.endswith('.keras'):
-                    model_path = os.path.join(root, file)
-                    logger.info(f"Found model file: {model_path}")
-                    return model_path
-        raise FileNotFoundError("No .keras model file found in the zip archive")
+    # Zip extraction removed; only .keras file is used
     @staticmethod
     def _ensure_model_loaded():
-        """Ensure the model is loaded from PAD-UFES-20.keras.zip."""
+        """Ensure the model is loaded from PAD-UFES-20.keras."""
         global _models, _models_loaded
         if 'default' in _models_loaded and _models_loaded['default'] and _models.get('default') is not None:
             return
-        zip_path = SkinLesionClassifier.DEFAULT_MODEL_ZIP
+        model_path = SkinLesionClassifier.DEFAULT_MODEL_FILE
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found: {model_path}")
         try:
-            model_path = SkinLesionClassifier._extract_model_from_zip(zip_path)
-            if not os.path.exists(model_path):
-                raise FileNotFoundError(f"Model file not found: {model_path}")
             _models['default'] = tf.keras.models.load_model(model_path)
             _models_loaded['default'] = True
             logger.info(f"Model loaded successfully from {model_path}")
@@ -60,8 +42,6 @@ class SkinLesionClassifier:
             logger.error(f"Error loading model: {e}")
             SkinLesionClassifier._cleanup_temp_files()
             raise
-    
-    @staticmethod
     
     @staticmethod
     def _cleanup_temp_files():
@@ -88,9 +68,8 @@ class SkinLesionClassifier:
 
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
-            processed_array = tf.expand_dims(resized_image, axis=0)
-            # processed_array = processed_array / 255.0
-            return processed_array.numpy()
+            processed_array = resized_image.numpy().reshape(1, SkinLesionClassifier.INPUT_SIZE[0], SkinLesionClassifier.INPUT_SIZE[1], 3)
+            return processed_array
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")
             raise
@@ -102,7 +81,8 @@ class SkinLesionClassifier:
             'MEL': 'Melanoma',
             'NEV': 'Nevus',
             'SCC': 'Squamous Cell Carcinoma',
-            'SEK': 'Seborrheic Keratosis'
+            'SEK': 'Seborrheic Keratosis',
+            'MPX': 'Monkeypox'
         }
         return class_map.get(class_name, 'Unknown')
     @staticmethod
@@ -118,8 +98,9 @@ class SkinLesionClassifier:
             prediction = _models['default'].predict(processed_image, verbose=0)
             results = {}
             for i, class_name in enumerate(SkinLesionClassifier.CLASS_NAMES):
-                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 3))
+                results[SkinLesionClassifier.lookup_class_name(class_name)] = float(round(prediction[0][i], 5))
             sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
+            logger.info(f"Prediction results: {sorted_results}")
             return sorted_results
         except Exception as e:
             logger.error(f"Error making prediction: {e}")
