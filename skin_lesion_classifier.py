@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.applications.convnext import preprocess_input as convnext_preprocess
 from PIL import Image
 import numpy as np
 import logging
@@ -69,6 +70,7 @@ class SkinLesionClassifier:
             image_array = img_to_array(image_rgb)
             resized_image = tf.image.resize(image_array, SkinLesionClassifier.INPUT_SIZE)
             processed_array = resized_image.numpy().reshape(1, SkinLesionClassifier.INPUT_SIZE[0], SkinLesionClassifier.INPUT_SIZE[1], 3)
+            processed_array = convnext_preprocess(processed_array)
             return processed_array
         except Exception as e:
             logger.error(f"Error preprocessing image: {e}")
